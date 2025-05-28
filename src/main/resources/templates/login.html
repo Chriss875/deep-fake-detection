@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a1a url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAIElEQVQIW2NkYGD4z0AswK4SAFXuAf8EPy+xRDiD+SEFN5cBDhQ8gE0gwA5IF0TAAEhEY1q/1f3YAAAAASUVORK5CYII=') repeat;
+            overflow: hidden;
+            color: #fff;
+        }
+        h1 {
+            color: #00ffcc;
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00ffcc, 0 0 20px #00ffcc;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .login-container {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00ff7f, 0 0 30px #00bfff;
+            width: 100%;
+            max-width: 400px;
+            animation: pulse 2s infinite alternate;
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .login-form label {
+            font-size: 1.1em;
+            color: #00bfff;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .login-form input[type="text"],
+        .login-form input[type="password"] {
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #00ffcc;
+            border-radius: 5px;
+            background: #222;
+            color: #fff;
+            font-size: 1em;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .login-form input[type="text"]:focus,
+        .login-form input[type="password"]:focus {
+            border-color: #00ff7f;
+            box-shadow: 0 0 10px #00ff7f;
+        }
+        .login-form button {
+            padding: 12px;
+            background: linear-gradient(45deg, #00ffcc, #00bfff);
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+        .login-form button:hover {
+            background: linear-gradient(45deg, #00bfff, #00ffcc);
+            transform: translateY(-2px);
+        }
+        .login-form button:active {
+            transform: translateY(0);
+        }
+        .error {
+            color: #ff4040;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9em;
+            text-shadow: 0 0 5px #ff4040;
+        }
+        @keyframes pulse {
+            from { box-shadow: 0 0 15px #00ff7f, 0 0 30px #00bfff; }
+            to { box-shadow: 0 0 20px #00ff7f, 0 0 40px #00bfff; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Login to Deepfake Detection</h1>
+        <form id="loginForm" class="login-form">
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required />
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required />
+            <button type="button" onclick="login()">Login</button>
+        </form>
+        <div id="error" class="error"></div>
+    </div>
+    <script>
+        function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            })
+            .then(async response => {
+        if (!response.ok) {
+            const text = await response.text();
+            throw new Error('Invalid credentials');
+        }
+        return response.json();
+    })
+    
+    .then(data => {
+    if (data.token) {
+        localStorage.setItem('jwtToken', data.token);
+        setTimeout(() => {
+            window.location.href = '/upload';
+        }, 100);
+    } else {
+        throw new Error('No token in response');
+    }
+})
+            .catch(error => {
+                document.getElementById("error").innerText = error.message;
+            });
+        }
+    </script>
+</body>
+</html>
