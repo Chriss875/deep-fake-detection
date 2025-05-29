@@ -1,15 +1,15 @@
 package com.IS336.PROJECT.controller;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.bind.annotation.RestController;
 import com.IS336.PROJECT.service.DeepFakeService;
 import lombok.RequiredArgsConstructor;
-import com.IS336.PROJECT.dto.DeepFakeResponse;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,15 +17,14 @@ import com.IS336.PROJECT.dto.DeepFakeResponse;
 public class DeepFakeController {
     private final DeepFakeService deepfakeDetectionService;
 
-@PostMapping("/detect")
-    public String handleFileUpload(@RequestParam("file") MultipartFile file, RedirectAttributes redirectAttributes) {
+@PostMapping("/image/detect")
+    public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) {
         try {
-            DeepFakeResponse response = deepfakeDetectionService.detectDeepfake(file);
-            redirectAttributes.addFlashAttribute("detectionResult", response);
-            return "redirect:/result";
+            Object result= deepfakeDetectionService.detectDeepFake(file);
+            return ResponseEntity.ok(result);
         } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Deepfake detection failed: " + e.getMessage());
-            return "redirect:/upload";
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
         }
     }
 
