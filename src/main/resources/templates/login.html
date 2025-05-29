@@ -103,36 +103,40 @@
         <div id="error" class="error"></div>
     </div>
     <script>
-        function login() {
-            const username = document.getElementById("username").value;
-            const password = document.getElementById("password").value;
-            fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            })
-            .then(async response => {
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error('Invalid credentials');
-        }
-        return response.json();
-    })
-    
-    .then(data => {
-    if (data.token) {
-        localStorage.setItem('jwtToken', data.token);
-        setTimeout(() => {
-            window.location.href = '/upload';
-        }, 100);
-    } else {
-        throw new Error('No token in response');
+    function login() {
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        })
+        .then(async response => {
+            if (!response.ok) {
+                const text = await response.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || 'Invalid credentials');
+                } catch (e) {
+                    throw new Error('Invalid credentials');
+                }
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.token) {
+                localStorage.setItem('jwtToken', data.token);
+                setTimeout(() => {
+                    window.location.href = '/upload';
+                }, 100);
+            } else {
+                throw new Error('No token in response');
+            }
+        })
+        .catch(error => {
+            document.getElementById("error").innerText = error.message;
+        });
     }
-})
-            .catch(error => {
-                document.getElementById("error").innerText = error.message;
-            });
-        }
     </script>
 </body>
 </html>

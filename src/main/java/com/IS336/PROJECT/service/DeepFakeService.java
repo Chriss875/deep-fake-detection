@@ -1,55 +1,57 @@
 package com.IS336.PROJECT.service;
 
-
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
-import org.json.JSONObject;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.Base64;
 import java.io.IOException;
+import java.util.UUID;
+import java.util.Map;
+import java.util.HashMap;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import com.IS336.PROJECT.dto.DeepFakeResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class DeepFakeService {
+    private static final String ARYA_API_URL = "https://ping.arya.ai/api/v1/deepfake-detection/image";
+    private static final String ARYA_API_TOKEN = "9d24accbf3606994f57eb2bf4b85fc49";
+    private final RestTemplate restTemplate;
 
-    @Value("${arya.api.token}")
-    private String apiToken;
+    public DeepFakeResponse detectDeepfake(MultipartFile file) throws IOException {
+        // Convert image to Base64
+        String base64Image = Base64.getEncoder().encodeToString(file.getBytes());
 
-    @Value("${arya.api.url}")
-    private String apiUrl;
+        // Prepare request payload
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("req_id", UUID.randomUUID().toString());
+        requestBody.put("doc_base64", base64Image);
+        requestBody.put("doc_type", "image");
+        requestBody.put("isIOS", false); // Adjust based on client
+        requestBody.put("orientation", 0); // Adjust as needed
 
-    public String detectDeepfake(MultipartFile file, String reqId, String docType, boolean isIOS, int orientation) throws IOException {
-        String base64File = Base64.getEncoder().encodeToString(file.getBytes());
+        // Set headers
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("token", ARYA_API_TOKEN);
 
-        JSONObject payload = new JSONObject();
-        payload.put("req_id", reqId);
-        payload.put("doc_base64", base64File);
-        payload.put("doc_type", docType);
-        payload.put("isIOS", isIOS);
-        payload.put("orientation", orientation);
+        // Create request entity
+        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(requestBody, headers);
 
-        CloseableHttpClient httpClient = HttpClients.createDefault();
-        HttpPost httpPost = new HttpPost(apiUrl + "/api/v1/deepfake-detection/" + docType);
+        // Call Arya.ai API
+        ResponseEntity<DeepFakeResponse> response = restTemplate.postForEntity(
+            ARYA_API_URL, requestEntity, DeepFakeResponse.class
+        );
 
-        httpPost.setHeader("token", apiToken);
-        httpPost.setHeader("Content-Type", "application/json");
-
-        StringEntity entity = new StringEntity(payload.toString());
-        httpPost.setEntity(entity);
-
-        try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
-            String responseBody = EntityUtils.toString(response.getEntity());
-            JSONObject jsonResponse = new JSONObject(responseBody);
-            if (jsonResponse.getBoolean("success")) {
-                return "The image is " + jsonResponse.getString("result");
-            } else {
-                return "Error: " + jsonResponse.getString("error_message");
-            }
+        if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+            return response.getBody();
+        } else {
+            throw new RuntimeException("Deepfake detection failed: " + response.getStatusCode());
         }
     }
 }

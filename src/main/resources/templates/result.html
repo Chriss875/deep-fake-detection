@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Deepfake Detection Result</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        .result-container {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border: 2px solid #00ffcc;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00ff7f;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 {
+            color: #00ffcc;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+        .result-details {
+            font-size: 1.1em;
+            margin-bottom: 15px;
+        }
+        .success {
+            color: #00ff7f;
+        }
+        .error {
+            color: #ff4040;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: linear-gradient(45deg, #00ffcc, #00bfff);
+            border: 2px solid #00ffcc;
+            border-radius: 5px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .back-link:hover {
+            background: linear-gradient(45deg, #00bfff, #00ffcc);
+        }
+    </style>
+</head>
+<body>
+    <div class="result-container">
+        <h1>Deepfake Detection Result</h1>
+        <!-- Display the DeepfakeResponse fields passed via RedirectAttributes -->
+        <div th:if="${detectionResult}" class="result-details">
+            <p><strong>Request ID:</strong> <span th:text="${detectionResult.req_id}"></span></p>
+            <p><strong>Document Type:</strong> <span th:text="${detectionResult.doc_type}"></span></p>
+            <p><strong>Result:</strong> <span th:class="${detectionResult.success ? 'success' : 'error'}" th:text="${detectionResult.result}"></span></p>
+            <p th:if="${!detectionResult.success}" class="error"><strong>Error:</strong> <span th:text="${detectionResult.error_message}"></span></p>
+        </div>
+        <div th:if="${!detectionResult}" class="error">
+            No detection result available.
+        </div>
+        <a href="/upload" class="back-link">Back to Upload</a>
+    </div>
+</body>
+</html>

@@ -103,20 +103,17 @@
             background: #c0392b;
             transform: scale(1.05);
         }
-        .result, .error {
+        .error {
             margin-top: 20px;
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            display: none;
-        }
-        .result {
-            background: #2ecc71;
-            color: white;
-        }
-        .error {
             background: #e74c3c;
             color: white;
+            display: none;
+        }
+        .error.visible {
+            display: block;
         }
         /* Image Tab Styles */
         #imageForm {
@@ -213,29 +210,28 @@
             <div class="tab" data-tab="videoForm">Video</div>
             <div class="tab" data-tab="audioForm">Audio</div>
         </div>
-        <form id="imageForm" class="upload-form active" onsubmit="handleUpload(event)">
+        <form id="imageForm" class="upload-form active" th:action="@{/api/detect}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="fileType" value="image/*">
             <label for="imageFile" class="file-input-label">Choose Image</label>
             <input type="file" id="imageFile" name="file" accept="image/*" required />
             <span class="file-name" id="imageFileName">No file chosen</span>
             <input type="submit" value="Detect Deepfake" />
         </form>
-        <form id="videoForm" class="upload-form" onsubmit="handleUpload(event)">
+        <form id="videoForm" class="upload-form" th:action="@{/api/detect}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="fileType" value="video/*">
             <label for="videoFile" class="file-input-label">Choose Video</label>
             <input type="file" id="videoFile" name="file" accept="video/*" required />
             <span class="file-name" id="videoFileName">No file chosen</span>
             <input type="submit" value="Detect Deepfake" />
         </form>
-        <form id="audioForm" class="upload-form" onsubmit="handleUpload(event)">
+        <form id="audioForm" class="upload-form" th:action="@{/api/detect}" method="post" enctype="multipart/form-data">
             <input type="hidden" name="fileType" value="audio/*">
             <label for="audioFile" class="file-input-label">Choose Audio</label>
             <input type="file" id="audioFile" name="file" accept="audio/*" required />
             <span class="file-name" id="audioFileName">No file chosen</span>
             <input type="submit" value="Detect Deepfake" />
         </form>
-        <div th:if="${result}" class="result" th:text="${result}"></div>
-        <div th:if="${error}" class="error" th:text="${error}"></div>
+        <div th:if="${errorMessage}" class="error visible" th:text="${errorMessage}"></div>
     </div>
     <script>
         // Tab switching
@@ -255,41 +251,6 @@
                 fileNameSpan.textContent = this.files.length > 0 ? this.files[0].name : 'No file chosen';
             });
         });
-
-        function handleUpload(event) {
-            event.preventDefault();
-            const form = event.target;
-            const formData = new FormData(form);
-            const fileInput = form.querySelector('input[type="file"]');
-            formData.set("file", fileInput.files[0]);
-            const token = localStorage.getItem('jwtToken');
-
-            fetch('/detect', {
-                method: 'POST',
-                headers: {
-                    'Authorization': 'Bearer ' + token
-                },
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Detection failed: ' + response.statusText);
-                }
-                return response.text();
-            })
-            .then(result => {
-                const resultDiv = document.querySelector('.result');
-                resultDiv.innerText = result;
-                resultDiv.style.display = 'block';
-                document.querySelector('.error').style.display = 'none';
-            })
-            .catch(error => {
-                const errorDiv = document.querySelector('.error');
-                errorDiv.innerText = error.message;
-                errorDiv.style.display = 'block';
-                document.querySelector('.result').style.display = 'none';
-            });
-        }
     </script>
 </body>
 </html>
