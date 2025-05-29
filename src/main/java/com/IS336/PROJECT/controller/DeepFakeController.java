@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 public class DeepFakeController {
     private final DeepFakeService deepfakeDetectionService;
 
-@PostMapping("/image/detect")
+@PostMapping("/detect")
     public ResponseEntity<?> handleFileUpload(@RequestParam("file") MultipartFile file) {
         try {
             Object result= deepfakeDetectionService.detectDeepFake(file);
