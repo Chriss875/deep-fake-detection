@@ -1,5 +1,7 @@
 package com.IS336.PROJECT.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.springframework.stereotype.Service;
 import com.IS336.PROJECT.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,17 +20,20 @@ public class LoginService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtUtil;
 
-    public String login(LoginRequest request) {
+    public Map<String, String> login(LoginRequest request) {
     String password = request.getPassword();
-    Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
+    Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
     if (userOptional.isEmpty()) {
         throw new EntityNotFoundException("User not found");
     }
     User user = userOptional.get();
     boolean passwordMatches = passwordEncoder.matches(password, user.getPassword());
     if (passwordMatches) {
-        String token = jwtUtil.generateToken(user.getUsername());
-        return token;
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        Map<String, String> response = new HashMap<>();
+        response.put("token", token);
+        response.put("role", user.getRole().name());
+        return response;
     } else {
         throw new InvalidCredentialsException("UNAUTHORIZED", "Invalid credentials");
     }

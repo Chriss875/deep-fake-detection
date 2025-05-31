@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import com.IS336.PROJECT.model.UserRoles;
 
 @Component
 @RequiredArgsConstructor
@@ -15,20 +16,21 @@ public class UserInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        createTestUser("user1", "12345678");
-        createTestUser("user2", "password2");
-        createTestUser("user3", "password3");
-        createTestUser("user4", "password4");
-        createTestUser("user5", "password5");
+        createTestUser("ian@gmail.com", "12345678", UserRoles.USER);
+        createTestUser("mbije@gmail.com", "password2", UserRoles.USER);
+        createTestUser("munda@gmail.com", "password3", UserRoles.USER);
+        createTestUser("mburu@gmail.com", "password4", UserRoles.USER);
+        createTestUser("katende@gmail.com", "password5", UserRoles.ADMIN);
     }
 
-    private void createTestUser(String username, String rawPassword) {
-        if (userRepository.findByUsername(username).isEmpty()) {
+    private void createTestUser(String email, String rawPassword, UserRoles role) {
+        if (userRepository.findByEmail(email).isEmpty()) {
             User user = new User();
-            user.setUsername(username);
+            user.setEmail(email);
             user.setPassword(passwordEncoder.encode(rawPassword));
+            user.setRole(role);
             userRepository.save(user);
-            System.out.println("Created test user: " + username);
+            System.out.println("Created test user: " + email);
         }
     }
 }

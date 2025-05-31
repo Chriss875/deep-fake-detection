@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
     private final JwtProperties jwtProperties;
+    
     private final SecretKey secretKey;
 
     public JwtService(JwtProperties jwtProperties) {
@@ -17,9 +18,10 @@ public class JwtService {
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes());
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String role) {
         return Jwts.builder()
                 .setSubject(username)
+                .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpiration()))
                 .signWith(secretKey)
@@ -32,7 +34,6 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-        
         return claims.getSubject();
     }
 
@@ -59,5 +60,15 @@ public class JwtService {
         } catch (Exception e) {
             return false;
         }
+    }
+    public String extractRole(String token) {
+        return extractAllClaims(token).get("role", String.class);
+    }
+    public Claims extractAllClaims(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(secretKey)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 }

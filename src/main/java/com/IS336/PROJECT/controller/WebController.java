@@ -8,14 +8,20 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class WebController {
 
+
     @GetMapping("/upload")
     public String showUploadForm() {
         return "upload";
     }
 
     @GetMapping("/login")
-public String showLoginForm() {
-    return "login";
-}
+    public String showLoginForm() {
+        return "login";
+    }
+    
+    @GetMapping("/admin")
+    public String adminPage() {
+        return "admin";
+    }
 
 }

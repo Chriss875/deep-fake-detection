@@ -1,6 +1,5 @@
 package com.IS336.PROJECT.controller;
 
-import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,9 +17,7 @@ public class AuthController {
 
     @PostMapping("/api/login")
     public ResponseEntity<?> login(@RequestBody LoginRequest request) {
-        String responseBody = loginService.login(request);
-        Map<String, String> response = new HashMap<>();
-        response.put("token", responseBody);
-        return ResponseEntity.ok().body(response);
+        Map<String, String> responseBody = loginService.login(request);
+        return ResponseEntity.ok().body(responseBody);
     }
 }

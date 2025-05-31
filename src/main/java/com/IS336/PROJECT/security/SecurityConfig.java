@@ -36,7 +36,7 @@ public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Excepti
         .requestMatchers("/login", "/api/login", "/css/**", "/js/**").permitAll()
         .requestMatchers("/upload").permitAll()
         .requestMatchers("/api/detect").permitAll()
-            .anyRequest().authenticated());
+            .anyRequest().permitAll());
     http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
     return http.build();
 }

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Deepfake Detection</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterUsername = document.getElementById('filter-username');
+            const filterStatus = document.getElementById('filter-status');
+            const sortTimestamp = document.getElementById('sort-timestamp');
+            const tableBody = document.getElementById('logs-table-body');
+            const originalRows = Array.from(tableBody.getElementsByTagName('tr'));
+
+            // Filter and Sort Logic
+            function applyFiltersAndSort() {
+                let filteredRows = [...originalRows];
+
+                // Filter by username
+                const usernameFilter = filterUsername.value.toLowerCase();
+                if (usernameFilter) {
+                    filteredRows = filteredRows.filter(row =>
+                        row.cells[1].textContent.toLowerCase().includes(usernameFilter)
+                    );
+                }
+
+                // Filter by status
+                const statusFilter = filterStatus.value;
+                if (statusFilter !== 'all') {
+                    filteredRows = filteredRows.filter(row =>
+                        row.cells[4].textContent === (statusFilter === 'success' ? 'Success' : 'Failure')
+                    );
+                }
+
+                // Sort by timestamp
+                const sortOrder = sortTimestamp.value;
+                filteredRows.sort((a, b) => {
+                    const timeA = new Date(a.cells[5].textContent);
+                    const timeB = new Date(b.cells[5].textContent);
+                    return sortOrder === 'asc' ? timeA - timeB : timeB - timeA;
+                });
+
+                // Update table
+                tableBody.innerHTML = '';
+                filteredRows.forEach(row => tableBody.appendChild(row));
+            }
+
+            filterUsername.addEventListener('input', applyFiltersAndSort);
+            filterStatus.addEventListener('change', applyFiltersAndSort);
+            sortTimestamp.addEventListener('change', applyFiltersAndSort);
+        });
+
+        // Helper function to parse result JSON
+        function parseResult(resultStr) {
+            try {
+                const resultObj = JSON.parse(resultStr.replace(/=/g, ':'));
+                if (resultObj.success) {
+                    return resultObj.result === 'real' ? 'Real' : 'Fake';
+                } else {
+                    return resultObj.error_message || resultObj.message || 'Unknown Error';
+                }
+            } catch (e) {
+                return 'Invalid Result';
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+            <a href="/detect" class="bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-200">Back to Detection</a>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700">Total Attempts</h2>
+                <p class="text-2xl font-bold text-gray-900">4</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700">Successful Detections</h2>
+                <p class="text-2xl font-bold text-green-600">2</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow-md">
+                <h2 class="text-lg font-semibold text-gray-700">Failed Detections</h2>
+                <p class="text-2xl font-bold text-red-600">2</p>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white p-4 rounded-lg shadow-md mb-6">
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-1">
+                    <label for="filter-username" class="block text-sm font-medium text-gray-700">Filter by Username</label>
+                    <input type="text" id="filter-username" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Enter username">
+                </div>
+                <div class="flex-1">
+                    <label for="filter-status" class="block text-sm font-medium text-gray-700">Filter by Status</label>
+                    <select id="filter-status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="all">All</option>
+                        <option value="success">Success</option>
+                        <option value="failure">Failure</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label for="sort-timestamp" class="block text-sm font-medium text-gray-700">Sort by Timestamp</label>
+                    <select id="sort-timestamp" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="desc">Newest First</option>
+                        <option value="asc">Oldest First</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="bg-white rounded-lg shadow-md overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Username</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Result</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table-body" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">ian@gmail.com</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">deepfake_detection</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-green-600">Result: fake</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-green-600 font-semibold">Success</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-30 22:34:53</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">mbije@gmail.com</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">deepfake_detection</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-green-600">Result: fake</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-green-600 font-semibold">Success</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-30 22:37:05</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">3</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">anonymousUser</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">deepfake_detection</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-red-600">Error: No credits available</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-red-600 font-semibold">Failure</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-30 22:56:43</td>
+                    </tr>
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">4</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">anonymousUser</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">deepfake_detection</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-red-600">Error: Invalid token</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm"><span class="text-red-600 font-semibold">Failure</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">2025-05-30 23:00:02</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
